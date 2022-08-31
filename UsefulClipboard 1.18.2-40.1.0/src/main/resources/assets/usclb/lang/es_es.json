@@ -1,0 +1,17 @@
+{
+	//Blocks
+	"block.usclb.clipboard": "Portapapeles",
+	
+	//Items
+	"item.usclb.clipboardfolder": "Marco de portapapeles",
+	
+	//Tabs
+	"itemGroup.usclbTab": "Portapapeles util",
+	
+	//Gui
+	"gui.title": "Notas",
+	
+	//Tooltips
+	"tooltip.usclb.clipboard.tooltip.notwritten": "No hay notas escritas",
+	"tooltip.usclb.clipboard.tooltip.notesby": "Notas de "
+}

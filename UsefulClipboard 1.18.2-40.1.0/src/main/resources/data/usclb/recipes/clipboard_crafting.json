@@ -1,0 +1,26 @@
+{
+	"type": "minecraft:crafting_shaped",
+    "pattern": [
+        "#O#",
+        "FPF",
+        "FPF"
+    ],
+    "key": {
+        "#": {
+            "tag": "minecraft:logs"
+        },
+        "O": {
+            "tag": "minecraft:wooden_buttons"
+        },
+        "F": {
+            "tag": "minecraft:planks"
+        },
+        "P": {
+            "item": "minecraft:paper"
+        }
+    },
+    "result": {
+        "item": "usclb:clipboard",
+        "count": 1
+    }
+}

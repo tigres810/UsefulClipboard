@@ -1,0 +1,17 @@
+{
+	//Blocks
+	"block.usclb.clipboard": "Clipboard",
+
+	//Items
+	"item.usclb.clipboardfolder": "Clipboard Frame",
+	
+	//Tabs
+	"itemGroup.usclbTab": "Useful Clipboard",
+	
+	//Gui
+	"gui.title": "Notes",
+	
+	//Tooltips
+	"tooltip.usclb.clipboard.tooltip.notwritten": "No Notes written",
+	"tooltip.usclb.clipboard.tooltip.notesby": "Notes of "
+}

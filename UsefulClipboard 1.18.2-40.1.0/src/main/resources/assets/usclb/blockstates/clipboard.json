@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=0": { "model": "usclb:block/clipboard" },
+    "facing=1": { "model": "usclb:block/clipboard", "y":  90 },
+    "facing=2": { "model": "usclb:block/clipboard", "y":  270},
+    "facing=3": { "model": "usclb:block/clipboard", "y":  180},
+    "facing=4": { "model": "usclb:block/clipboard", "x": 90, "y":  90 },
+    "facing=5": { "model": "usclb:block/clipboard", "x": 90, "y":  270 },
+    "facing=6": { "model": "usclb:block/clipboard", "x": 90 },
+    "facing=7": { "model": "usclb:block/clipboard", "x": 90, "y":  180}
+  }
+}
