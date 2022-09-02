@@ -2,10 +2,13 @@ package com.tigres810.usclb.common.blocks;
 
 import java.util.stream.Stream;
 
+import com.tigres810.usclb.common.data.ClipboardOrientation;
 import com.tigres810.usclb.core.init.BlockEntityInit;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
@@ -15,7 +18,8 @@ import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
-import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -23,7 +27,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class ClipboardBlock extends Block implements EntityBlock {
 
-	public static final IntegerProperty PROPERTY = IntegerProperty.create( "facing", 0, 7 );
+	public static final EnumProperty<ClipboardOrientation> PROPERTY = EnumProperty.create( "facing", ClipboardOrientation.class );
 	private static final VoxelShape SHAPE_DN = Stream
 			.of( Block.box( 6.300000000000001, 0.15, 12.1, 9.7, 0.19999999999999998, 12.5 ),
 					Block.box( 6.65, 0, 12.49, 9.35, 0.2, 12.9 ),
@@ -112,6 +116,13 @@ public class ClipboardBlock extends Block implements EntityBlock {
 					Block.box( 15.899999999999999, 3.9000000000000004, 5.1, 16, 12.1, 10.9 ) )
 			.reduce( ( v1, v2 ) -> Shapes.join( v1, v2, BooleanOp.OR ) ).get( );
 
+	public static final float BTN_MIN_Y = 4.125F/16F;
+	public static final float BTN_MAX_Y = 4.625F/16F;
+	public static final float BTN_LEFT_MIN_X = 5.45F/16F;
+	public static final float BTN_LEFT_MAX_X = 5.95F/16F;
+	public static final float BTN_RIGHT_MIN_X = 10.05F/16F;
+	public static final float BTN_RIGHT_MAX_X = 10.55F/16F;
+
 	public ClipboardBlock ( Properties pProperties ) {
 		super( pProperties );
 	}
@@ -120,57 +131,40 @@ public class ClipboardBlock extends Block implements EntityBlock {
 	public BlockEntity newBlockEntity ( BlockPos pPos, BlockState pState ) {
 		return BlockEntityInit.CLIPBOARD_BLOCK_TILE.get( ).create( pPos, pState );
 	}
-	
-	
 
 	@Override
 	public VoxelShape getShape ( BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext ) {
 
-		switch ( pState.getValue( PROPERTY ) ) {
-			case 0:
-				return SHAPE_DN;
-			case 1:
-				return SHAPE_DE;
-			case 2:
-				return SHAPE_DW;
-			case 3:
-				return SHAPE_DS;
-			case 4:
-				return SHAPE_E;
-			case 5:
-				return SHAPE_W;
-			case 6:
-				return SHAPE_N;
-			case 7:
-				return SHAPE_S;
-			default:
-				return SHAPE_DN;
-		}
+		return switch ( pState.getValue( PROPERTY ) ) {
+			case DOWN_NORTH -> SHAPE_DN;
+			case DOWN_EAST -> SHAPE_DE;
+			case DOWN_WEST -> SHAPE_DW;
+			case DOWN_SOUTH -> SHAPE_DS;
+			case EAST -> SHAPE_E;
+			case WEST -> SHAPE_W;
+			case NORTH -> SHAPE_N;
+			case SOUTH -> SHAPE_S;
+		};
 	}
 
 	@Override
 	public BlockState getStateForPlacement ( BlockPlaceContext context ) {
-		Direction looking = context.getNearestLookingDirection( );
+		Direction face = context.getClickedFace( );
 		Direction facing = context.getHorizontalDirection( ).getOpposite( );
-
-		if ( looking == Direction.DOWN ) {
-
-			if ( facing == Direction.EAST ) {
-				return this.defaultBlockState( ).setValue( PROPERTY, 1 );
-			} else if ( facing == Direction.WEST ) {
-				return this.defaultBlockState( ).setValue( PROPERTY, 2 );
-			} else if ( facing == Direction.SOUTH ) { return this.defaultBlockState( ).setValue( PROPERTY, 3 ); }
+		ClipboardOrientation state = ClipboardOrientation.fromDirections( face, facing );
+		
+		if(state != null) {
+			return this.defaultBlockState( ).setValue( PROPERTY, ClipboardOrientation.fromDirections( face, facing ) );
 		} else {
-
-			if ( facing == Direction.EAST ) {
-				return this.defaultBlockState( ).setValue( PROPERTY, 4 );
-			} else if ( facing == Direction.WEST ) {
-				return this.defaultBlockState( ).setValue( PROPERTY, 5 );
-			} else if ( facing == Direction.NORTH ) {
-				return this.defaultBlockState( ).setValue( PROPERTY, 6 );
-			} else if ( facing == Direction.SOUTH ) { return this.defaultBlockState( ).setValue( PROPERTY, 7 ); }
+			return null;
 		}
-		return this.defaultBlockState( ).setValue( PROPERTY, 0 );
+	}
+
+	@Override
+	@SuppressWarnings("deprecation")
+	public InteractionResult use ( BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit ) {
+		//TODO: detect button interactions and switch pages accordingly
+		return super.use(state, level, pos, player, hand, hit);
 	}
 
 	@Override
@@ -183,4 +177,53 @@ public class ClipboardBlock extends Block implements EntityBlock {
 		builder.add( PROPERTY );
 	}
 
+
+
+	public static boolean isHoveringButton ( BlockPos pos, BlockState state, HitResult hit, boolean right ) {
+		if ( hit instanceof BlockHitResult blockHit && blockHit.getType( ) != HitResult.Type.MISS ) {
+			if ( !blockHit.getBlockPos( ).equals( pos ) ) {
+				return false;
+			}
+
+			ClipboardOrientation orientation = state.getValue( PROPERTY );
+			Direction dir = orientation.getOrientation( );
+			boolean xAxis = dir.getAxis( ) == Direction.Axis.X;
+			Vec3 hitPos = hit.getLocation( );
+
+			Direction face = orientation.isFloor( ) ? Direction.UP : dir;
+			if ( blockHit.getDirection() != face ) {
+				return false;
+			}
+
+			double y;
+			if ( orientation.isFloor( ) ) {
+				y = xAxis ? hitPos.x : hitPos.z;
+				y -= Math.floor( y );
+				if ( dir.getAxisDirection( ) == Direction.AxisDirection.POSITIVE ) {
+					y = 1D - y;
+				}
+			}
+			else {
+				y = hitPos.y - Math.floor( hitPos.y );
+			}
+
+			if ( y < BTN_MIN_Y || y > BTN_MAX_Y ) {
+				return false;
+			}
+
+			double xz = xAxis ? hitPos.z : hitPos.x;
+			xz -= Math.floor( xz );
+			if ( dir.getClockWise( ).getAxisDirection( ) == Direction.AxisDirection.POSITIVE ) {
+				xz = 1D - xz;
+			}
+
+			if ( right ) {
+				return xz >= BTN_RIGHT_MIN_X && xz <= BTN_RIGHT_MAX_X;
+			}
+			else {
+				return xz >= BTN_LEFT_MIN_X && xz <= BTN_LEFT_MAX_X;
+			}
+		}
+		return false;
+	}
 }

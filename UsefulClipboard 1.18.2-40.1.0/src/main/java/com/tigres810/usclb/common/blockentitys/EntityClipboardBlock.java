@@ -3,6 +3,7 @@ package com.tigres810.usclb.common.blockentitys;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tigres810.usclb.common.data.Page;
 import com.tigres810.usclb.core.init.BlockEntityInit;
 
 import net.minecraft.core.BlockPos;
@@ -18,17 +19,15 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class EntityClipboardBlock extends BlockEntity {
 
-	String author = "";
-	private List< CompoundTag > pages = new ArrayList< CompoundTag >( );
+	private String author = "";
+	private final List< Page > pages = new ArrayList<>( );
+	private Page activePage = null;
 
 	public EntityClipboardBlock ( BlockPos pos, BlockState state ) {
 		super( BlockEntityInit.CLIPBOARD_BLOCK_TILE.get( ), pos, state );
 	}
 
-	public List< CompoundTag > getPages ( ) {
-		System.out.print( this.pages );
-		return this.pages;
-	}
+	public Page getActivePage ( ) { return activePage; }
 
 	@Override
 	public Packet< ClientGamePacketListener > getUpdatePacket ( ) {
@@ -37,29 +36,34 @@ public class EntityClipboardBlock extends BlockEntity {
 
 	@Override
 	public void onDataPacket ( Connection net, ClientboundBlockEntityDataPacket pkt ) {
-		handleUpdateTag( pkt.getTag( ) );
+		CompoundTag tag = pkt.getTag( );
+
+		if ( tag != null ) {
+			handleUpdateTag( tag );
+		}
 	}
 
 	@Override
 	public CompoundTag getUpdateTag ( ) {
 		CompoundTag nbtTagCompound = new CompoundTag( );
-		ListTag pagesNBT = new ListTag( );
-
-		for ( CompoundTag page : pages ) {
-			pagesNBT.add( page );
-		}
 
 		nbtTagCompound.putString( "author", author );
-		nbtTagCompound.put( "pages", pagesNBT );
+
+		if ( this.activePage != null ) {
+			nbtTagCompound.put( "page", activePage.serialize( ) );
+		}
+
 		return nbtTagCompound;
 	}
 
 	@Override
-	public void handleUpdateTag ( CompoundTag parentNBTTagCompound ) {
-		this.author = parentNBTTagCompound.getString( "author" );
+	public void handleUpdateTag ( CompoundTag tag ) {
+		this.author = tag.getString( "author" );
 
-		for ( Tag page : parentNBTTagCompound.getList( "pages", Tag.TAG_COMPOUND ) ) {
-			this.pages.add( ( CompoundTag ) page );
+		if ( tag.contains( "page" ) ) {
+			this.activePage = Page.deserialize( tag.getList( "page", Tag.TAG_COMPOUND ) );
+		} else {
+			this.activePage = null;
 		}
 	}
 
@@ -68,8 +72,8 @@ public class EntityClipboardBlock extends BlockEntity {
 		super.saveAdditional( pTag );
 		ListTag pagesNBT = new ListTag( );
 
-		for ( CompoundTag page : pages ) {
-			pagesNBT.add( page );
+		for ( Page page : pages ) {
+			pagesNBT.add( page.serialize( ) );
 		}
 
 		pTag.putString( "author", author );
@@ -81,8 +85,14 @@ public class EntityClipboardBlock extends BlockEntity {
 		super.load( pTag );
 		this.author = pTag.getString( "author" );
 
-		for ( Tag page : pTag.getList( "pages", Tag.TAG_COMPOUND ) ) {
-			this.pages.add( ( CompoundTag ) page );
+		this.pages.clear( );
+
+		for ( Tag page : pTag.getList( "pages", Tag.TAG_LIST ) ) {
+			this.pages.add( Page.deserialize( ( ListTag ) page ) );
+		}
+
+		if ( this.pages.size( ) > 0 ) {
+			this.activePage = this.pages.get( 0 );
 		}
 	}
 

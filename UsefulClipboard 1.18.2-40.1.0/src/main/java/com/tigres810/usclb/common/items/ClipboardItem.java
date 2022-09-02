@@ -56,7 +56,7 @@ public class ClipboardItem extends BlockItem {
 
 		if ( !pLevel.isClientSide ) {
 
-			if ( pPlayer.isCrouching( ) ) {
+			if ( pPlayer.isShiftKeyDown( ) ) {
 				ItemStack itemStack = pPlayer.getItemInHand( pUsedHand );
 				CompoundTag tag = itemStack.getTag( );
 				MainNetwork.sendToPlayer( new ClipboardInfo( tag ), ( ServerPlayer ) pPlayer );
@@ -71,7 +71,7 @@ public class ClipboardItem extends BlockItem {
 		if ( !pContext.getLevel( ).isClientSide( ) ) {
 			Player player = pContext.getPlayer( );
 
-			if ( player.isCrouching( ) ) {
+			if ( player.isShiftKeyDown( ) ) {
 				ItemStack itemStack = player.getItemInHand( InteractionHand.MAIN_HAND );
 				CompoundTag tag = itemStack.getTag( );
 				MainNetwork.sendToPlayer( new ClipboardInfo( tag ), ( ServerPlayer ) player );
