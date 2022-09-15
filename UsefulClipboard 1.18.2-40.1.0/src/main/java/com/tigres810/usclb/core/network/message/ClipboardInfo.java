@@ -2,11 +2,12 @@ package com.tigres810.usclb.core.network.message;
 
 import java.util.function.Supplier;
 
-import com.tigres810.usclb.client.screens.ClipboardScreen;
+import com.tigres810.usclb.client.onlyinclient.OpenScreen;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.network.NetworkEvent;
 
 public class ClipboardInfo {
@@ -28,9 +29,11 @@ public class ClipboardInfo {
 	public static void handle ( ClipboardInfo message, Supplier< NetworkEvent.Context > contextSupplier ) {
 		NetworkEvent.Context context = contextSupplier.get( );
 		context.enqueueWork( ( ) -> {
-			Minecraft mc = Minecraft.getInstance( );
 
-			mc.setScreen( new ClipboardScreen( message.nbt ) );
+			// Serverside
+			if ( FMLEnvironment.dist == Dist.CLIENT ) {
+				OpenScreen.openScreen( message );
+			}
 		} );
 		context.setPacketHandled( true );
 	}
